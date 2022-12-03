@@ -1,0 +1,23 @@
+{
+    "folders":
+    [
+        {
+            "path": "."
+        },
+        {
+            "path": "/home/alberto/Proyectos/adventofcode2021"
+        }
+    ],
+    "build_systems": [
+        {
+            "name": "Run Advent of code 2022",
+            "working_dir": "$project_path",
+            "cmd": ["pipenv", "run", "python", "run.py"]
+        },
+        {
+            "name": "Run tests",
+            "working_dir": "$project_path",
+            "cmd": ["pipenv", "run", "pytest"]
+        }
+    ]
+}
