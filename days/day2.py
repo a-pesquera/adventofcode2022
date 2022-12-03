@@ -31,7 +31,7 @@ def top_3_elfs_with_max_weight(data):
     return sum(elfs[:3])
 
 
-def parse_line(line):
+def parse_line_part_1(line):
     op, you = line.split(' ')
     values = {
         'A': 'Rock',
@@ -42,6 +42,31 @@ def parse_line(line):
         'Z': 'Scissors',
     }
     return (values[op], values[you])
+
+
+def parse_line_part_2(line):
+    order = ['Rock', 'Paper', 'Scissors']
+
+    op, you = line.split(' ')
+
+    opponent_values = {
+        'A': 0,
+        'B': 1,
+        'C': 2,
+    }
+    value_of_opponent = opponent_values[op]
+
+    your_values = {
+        # Lose
+        'X': (value_of_opponent - 1) % 3,
+        # Draw
+        'Y': value_of_opponent,
+        # Win
+        'Z': (value_of_opponent + 1) % 3,
+    }
+    value_of_your_shape = your_values[you]
+
+    return (order[value_of_opponent], order[value_of_your_shape])
 
 
 def play_round(opponent, you):
@@ -66,18 +91,27 @@ def play_round(opponent, you):
     return points
 
 
-def calculate_points(data):
+def calculate_points_part_1(data):
     points = 0
     for line in data:
-        opponent, you = parse_line(line)
+        opponent, you = parse_line_part_1(line)
+        points += play_round(opponent, you)
+    return points
+
+
+def calculate_points_part_2(data):
+    points = 0
+    for line in data:
+        opponent, you = parse_line_part_2(line)
         points += play_round(opponent, you)
     return points
 
 
 def part_1(input_file):
     data = common.read_data_file_generator(input_file)
-    return calculate_points(data)
+    return calculate_points_part_1(data)
 
 
 def part_2(input_file):
-    raise NotImplementedError
+    data = common.read_data_file_generator(input_file)
+    return calculate_points_part_2(data)
