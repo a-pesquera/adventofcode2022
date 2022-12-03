@@ -2,7 +2,7 @@
 import common
 
 
-def function(data):
+def elfs_weights(data):
     elfs = []
     current = 0
     for l in data:
@@ -15,10 +15,25 @@ def function(data):
     # Handle last line not being a new line
     if current:
         elfs.append(current)
+    return elfs
 
+
+def elf_with_max_weight(data):
+    elfs = elfs_weights(data)
     return max(elfs)
 
 
-def part1(input_file):
+def top_3_elfs_with_max_weight(data):
+    elfs = elfs_weights(data)
+    elfs.sort(reverse=True)
+    return sum(elfs[:3])
+
+
+def part_1(input_file):
     data = common.read_data_file_generator(input_file)
-    return function(data)
+    return elf_with_max_weight(data)
+
+
+def part_2(input_file):
+    data = common.read_data_file_generator(input_file)
+    return top_3_elfs_with_max_weight(data)
