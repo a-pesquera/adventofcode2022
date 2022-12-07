@@ -99,10 +99,31 @@ def find_and_sum_by_top_size_limit(data, top_limit=100000):
     return result
 
 
+def find_directory_to_remove(data, filesystem=70000000, required=30000000):
+    root = create_tree(data)
+    # print_tree(root)
+
+    unused_space = filesystem - root['size']
+    required_limit = required - unused_space
+
+    candidates = []
+
+    pending_folders = [root]
+    while pending_folders:
+        folder = pending_folders.pop()
+        if folder['size'] >= required_limit:
+            candidates.append(folder)
+            pending_folders.extend(folder['folders'])
+
+    folder = min(candidates, key=lambda x: x['size'])
+    return folder['size']
+
+
 def part_1(input_file):
     data = common.read_data_file_generator(input_file)
     return find_and_sum_by_top_size_limit(data)
 
 
 def part_2(input_file):
-    raise NotImplementedError
+    data = common.read_data_file_generator(input_file)
+    return find_directory_to_remove(data)
