@@ -17,40 +17,6 @@ class TestDay5:
         result = day.parse_stacks(lines)
         assert result == [['B'], [], ['X']]
 
-    def test_parse_step_cratemover9000_single(self):
-        result = day.parse_step_cratemover9000('move 1 from 2 to 1')
-        assert result == [(2, 1)]
-
-    def test_parse_step_cratemover9000_multi(self):
-        result = day.parse_step_cratemover9000('move 3 from 13 to 42')
-        assert result == [(13, 42), (13, 42), (13, 42)]
-
-    def test_parse_step_cratemover9001_single(self):
-        result = day.parse_step_cratemover9001('move 1 from 2 to 1')
-        assert result == [(2, 1, 1)]
-
-    def test_parse_step_cratemover9001_multi(self):
-        result = day.parse_step_cratemover9001('move 3 from 13 to 42')
-        assert result == [(13, 42, 3)]
-
-    def test_do_step_cratemover9000(self):
-        stacks = [['B'], [], ['X']]
-        step = (1, 2)
-        result = day.do_step_cratemover9000(stacks, step)
-        assert result == [[], ['B'], ['X']]
-
-    def test_do_step_cratemover9001_single(self):
-        stacks = [['B', 'A'], [], ['X']]
-        step = (1, 2, 1)
-        result = day.do_step_cratemover9001(stacks, step)
-        assert result == [['B'], ['A'], ['X']]
-
-    def test_do_step_cratemover9001_multi(self):
-        stacks = [['B', 'A'], [], ['X']]
-        step = (1, 2, 2)
-        result = day.do_step_cratemover9001(stacks, step)
-        assert result == [[], ['B', 'A'], ['X']]
-
     def test_part_1_example(self):
         result = day.part_1(day.EXAMPLE_FILE)
         assert result == 'CMZ'

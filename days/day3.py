@@ -35,21 +35,19 @@ def calculate_sum_of_priorities(data):
     return value
 
 
-def calculate_sum_of_priorities_of_groups(data):
+def calculate_sum_of_priorities_of_groups(data, group_size=3):
     value = 0
-
-    group_size = 3
     group = []
-
     for rucksack in data:
         group.append(rucksack)
 
         if len(group) == group_size:
-            repeated_item = find_common(group)
+            full_group = group
+            group = []
+
+            repeated_item = find_common(full_group)
             priority_value = calculate_priority(repeated_item)
             value += priority_value
-
-            group = []
 
     return value
 

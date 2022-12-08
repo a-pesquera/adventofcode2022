@@ -63,7 +63,7 @@ class TestDay7:
             '789 c.txt',
         ])
         result = day.find_and_sum_by_top_size_limit(data)
-        assert result == 4104
+        assert result == 6840
 
     def test_part_1_example(self):
         result = day.part_1(day.EXAMPLE_FILE)
