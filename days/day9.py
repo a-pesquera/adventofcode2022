@@ -48,19 +48,24 @@ def calculate_tail_movement(head, tail):
     return new_tail
 
 
-def count_tail_visited_positions(data):
+def count_tail_visited_positions(data, rope_length=2):
     tail_positions = set()
 
-    head = (0, 0)
-    tail = (0, 0)
-    tail_positions.add(tail)
+    rope = [(0, 0)] * rope_length
+    tail_positions.add(rope[-1])
 
     for line in data:
         direction, num = parse_line(line)
         for x in range(num):
-            head = (head[0] + direction[0], head[1] + direction[1])
-            tail = calculate_tail_movement(head, tail)
-            tail_positions.add(tail)
+            # Move head
+            head = rope[0]
+            rope[0] = (head[0] + direction[0], head[1] + direction[1])
+
+            # Recalculate remaining rope positions
+            for i, (pseudo_head, pseudo_tail) in enumerate(zip(rope, rope[1:]), 1):
+                rope[i] = calculate_tail_movement(pseudo_head, pseudo_tail)
+
+            tail_positions.add(rope[-1])
 
     return len(tail_positions)
 
@@ -71,4 +76,5 @@ def part_1(input_file):
 
 
 def part_2(input_file):
-    raise NotImplementedError
+    data = common.read_data_file_generator(input_file)
+    return count_tail_visited_positions(data, rope_length=10)

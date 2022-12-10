@@ -32,10 +32,24 @@ class TestDay9:
         result = day.part_1(day.DATA_FILE)
         assert result == 6197
 
-    def _test_part_2_example(self):
+    def test_part_2_example(self):
         result = day.part_2(day.EXAMPLE_FILE)
-        assert result == 0
+        assert result == 1
 
-    def _test_part_2(self):
+    def test_part_2_example(self):
+        data = (x for x in [
+            'R 5',
+            'U 8',
+            'L 8',
+            'D 3',
+            'R 17',
+            'D 10',
+            'L 25',
+            'U 20',
+        ])
+        result = day.count_tail_visited_positions(data, rope_length=10)
+        assert result == 36
+
+    def test_part_2(self):
         result = day.part_2(day.DATA_FILE)
-        assert result == 0
+        assert result == 2562
