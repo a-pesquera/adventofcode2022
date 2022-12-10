@@ -36,7 +36,7 @@ class TestDay9:
         result = day.part_2(day.EXAMPLE_FILE)
         assert result == 1
 
-    def test_part_2_example(self):
+    def test_part_2_example_larger(self):
         data = (x for x in [
             'R 5',
             'U 8',
