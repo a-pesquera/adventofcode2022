@@ -230,10 +230,56 @@ def walk(matrix, start, end):
     return current_distance
 
 
+def walk_until_a(matrix, end):
+    limit_rows = len(matrix)
+    limit_cols = len(matrix[0])
+
+    matrix[end[0]][end[1]] -= 1
+
+    expected_value = ELEVATIONS.index('a')
+
+    explored = set()
+    explored.add(end)
+
+    queue = []
+    queue.append((end, 0))
+
+    while queue:
+        current, current_distance = queue.pop(0)
+
+        i, j = current
+
+        option_points = [
+            (i - 1, j) if i else None,  # Up
+            (i, j + 1) if j < limit_cols - 1 else None,  # Right
+            (i + 1, j) if i < limit_rows - 1 else None,  # Down
+            (i, j - 1) if j else None,  # Left
+        ]
+        option_points = [x for x in option_points if x and x not in explored]
+        option_points = [x for x in option_points if matrix[x[0]][x[1]] >= matrix[i][j] - 1]
+
+        for option_point in option_points:
+            queue.append((option_point, current_distance + 1))
+            explored.add(option_point)
+
+            option_value = matrix[option_point[0]][option_point[1]]
+            if option_value == expected_value:
+                return current_distance + 1
+
+    return current_distance
+
+
 def find_fewest_steps(data):
     matrix = create_matrix(data)
     start, end = find_start_and_end(matrix)
     result = walk(matrix, start, end)
+    return result
+
+
+def find_fewest_steps_until_a(data):
+    matrix = create_matrix(data)
+    _, end = find_start_and_end(matrix)
+    result = walk_until_a(matrix, end)
     return result
 
 
@@ -243,4 +289,5 @@ def part_1(input_file):
 
 
 def part_2(input_file):
-    raise NotImplementedError
+    data = common.read_data_file_generator(input_file)
+    return find_fewest_steps_until_a(data)
