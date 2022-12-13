@@ -72,10 +72,57 @@ def get_sum_of_indexes_in_right_order(data):
     return sum(ordered_indexes)
 
 
+def quicksort_partition(array, left, right):
+    pivot = array[right]
+    partition = left - 1
+
+    for i in range(left, right):
+        if is_in_right_order(array[i], pivot):
+            partition += 1
+            array[partition], array[i] = array[i], array[partition]
+
+    partition += 1
+    array[partition], array[right] = array[right], array[partition]
+    return partition
+
+
+def quicksort(array, left=None, right=None):
+    left = left if left is not None else 0
+    right = right if right is not None else len(array) - 1
+
+    if left >= right:
+        return
+
+    partition = quicksort_partition(array, left, right)
+    quicksort(array, left, partition - 1)
+    quicksort(array, partition + 1, right)
+
+
+def multiply_divider_packets_indexes(data):
+    pair_of_packets = parse_pair_of_packets(data)
+    all_packets = [x for pair in pair_of_packets for x in pair]
+
+    divider_packets = [
+        [[2]],
+        [[6]],
+    ]
+    all_packets.extend(divider_packets)
+
+    quicksort(all_packets)
+
+    indexes = []
+    for divider in divider_packets:
+        index = all_packets.index(divider)
+        indexes.append(index + 1)
+
+    return indexes[0] * indexes[1]
+
+
 def part_1(input_file):
     data = common.read_data_file_generator(input_file)
     return get_sum_of_indexes_in_right_order(data)
 
 
 def part_2(input_file):
-    raise NotImplementedError
+    data = common.read_data_file_generator(input_file)
+    return multiply_divider_packets_indexes(data)
