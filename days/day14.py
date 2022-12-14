@@ -44,7 +44,7 @@ def parse_path_of_rock(path_of_rock):
     return rocks
 
 
-def generate_sand(start, rocks, limit):
+def generate_sand(start, rocks, limit=None):
     gravity = (0, 1)
 
     point = start
@@ -54,7 +54,7 @@ def generate_sand(start, rocks, limit):
     while True:
         point = (point[0] + gravity[0], point[1] + gravity[1])
         # print('sand', point)
-        if point[1] > limit:
+        if limit and point[1] > limit:
             return None
 
         if point in rocks:
@@ -75,7 +75,7 @@ def generate_sand(start, rocks, limit):
                 point = (point[0] - 1, point[1] - 1)
 
 
-def units_of_sand(data):
+def units_of_sand(data, part=1):
     all_rocks = set()
     for path_of_rock in data:
         rocks = parse_path_of_rock(path_of_rock)
@@ -87,15 +87,33 @@ def units_of_sand(data):
     last_rock_limit = max([x[1] for x in all_rocks])
     print('last_rock_limit', last_rock_limit)
 
+    if part == 2:
+        # Add floor rocks
+        floor_y = last_rock_limit + 2
+
+        lowest_x_coordinate = min([x[0] for x in all_rocks])
+        highest_x_coordinate = max([x[0] for x in all_rocks])
+
+        lowest_x_coordinate -= floor_y + 5  # Maybe only 1, but...
+        highest_x_coordinate += floor_y + 5  # Maybe only 1, but...
+
+        x_diff = highest_x_coordinate - lowest_x_coordinate + 1
+        for i in range(x_diff):
+            floor_point = (lowest_x_coordinate + i, floor_y)
+            all_rocks.add(floor_point)
+
     sand_start = (500, 0)
 
     count_sand = 0
+    limit = last_rock_limit if part == 1 else None
     while True:
-        new_sand_point = generate_sand(sand_start, all_rocks, last_rock_limit)
+        new_sand_point = generate_sand(sand_start, all_rocks, limit=limit)
         if new_sand_point is None:
             break
         all_rocks.add(new_sand_point)
         count_sand += 1
+        if new_sand_point == sand_start:
+            break
 
     return count_sand
 
@@ -106,4 +124,5 @@ def part_1(input_file):
 
 
 def part_2(input_file):
-    raise NotImplementedError
+    data = common.read_data_file_generator(input_file)
+    return units_of_sand(data, part=2)
