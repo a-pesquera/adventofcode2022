@@ -90,7 +90,7 @@ def create_graph(data):
 
     check_valves = list(valves.values())
     for valve in check_valves:
-        if valve.rate == 0 and len(tmp[valve.name]) == 2:
+        if valve.rate == 0 and len(tmp[valve.name]) == 2 and valve.name != 'AA':
             # print(valve)
             # print('this', tmp[valve.name])
             # print('Irrelevant connection')
@@ -159,9 +159,11 @@ def calculate_distances(node, base_distance=0, skip_set=None, depth=1):
 
 
 def main_logic(actual, valves_remaining, time_remaining):
+    best_path = [actual.name]
     best_score = 0
 
     for vr in valves_remaining:
+        path = [actual.name]
         score = 0
 
         if actual.distances[vr.name] + 1 >= time_remaining:
@@ -174,17 +176,21 @@ def main_logic(actual, valves_remaining, time_remaining):
         score += tmp_time * vr.rate
 
         other_valves = [x for x in valves_remaining if x != vr]
-        tmp_score = main_logic(vr, other_valves, tmp_time)
+        tmp_score, tmp_path = main_logic(vr, other_valves, tmp_time)
+
+        path.extend(tmp_path)
 
         score += tmp_score
         if score > best_score:
             best_score = score
+            best_path = path
 
         # print('vr', vr)
         # print('score', score)
         # print('tmp_score', tmp_score)
+        # print('path', path)
 
-    return best_score
+    return best_score, best_path
 
 
 def foo(data, time_remaining=30, initial_valve='AA'):
@@ -200,8 +206,9 @@ def foo(data, time_remaining=30, initial_valve='AA'):
     valves_with_rate = [v for v in valves.values() if v.rate]
     print('valves_with_rate', len(valves_with_rate), valves_with_rate)
 
-    best_score = main_logic(valves[initial_valve], valves_with_rate, time_remaining)
+    best_score, best_path = main_logic(valves[initial_valve], valves_with_rate, time_remaining)
     print('best_score', best_score)
+    print('best_path', best_path)
     return best_score
 
     # best_score = 0
@@ -240,10 +247,104 @@ def foo(data, time_remaining=30, initial_valve='AA'):
     # return best_score
 
 
+def bar(data, time_remaining=26, initial_valve='AA'):
+    valves = create_graph(data)
+
+    # Calculate distances from valve to all of other valves
+    for name in valves:
+        valves[name].distances = calculate_distances(valves[name])
+
+    # for name in valves:
+    #     print(valves[name])
+
+    valves_with_rate = [v for v in valves.values() if v.rate]
+    print('valves_with_rate', len(valves_with_rate), valves_with_rate)
+
+    from itertools import permutations
+
+    worker_1_length = len(valves_with_rate) // 2
+    worker_2_length = len(valves_with_rate) - worker_1_length
+
+    best_score = 0
+
+    valves_with_rate_set = set(valves_with_rate)
+    for tpl in permutations(valves_with_rate, worker_1_length):
+        # print(tpl)
+        valves_for_1 = set(tpl)
+        # print('valves_for_1', valves_for_1)
+        valves_for_2 = valves_with_rate_set - valves_for_1
+        # print('valves_for_2', valves_for_2)
+
+        best_score_1, best_path_1 = main_logic(valves[initial_valve], valves_for_1, time_remaining)
+        best_score_2, best_path_2 = main_logic(valves[initial_valve], valves_for_2, time_remaining)
+        # print('best_score_1', best_score_1)
+        # print('best_path_1', best_path_1)
+        # print('best_score_2', best_score_2)
+        # print('best_path_2', best_path_2)
+        if best_score_1 + best_score_2 > best_score:
+            best_score = best_score_1 + best_score_2
+            print('new best_score', best_score)
+
+    print('best_score', best_score)
+
+    return best_score
+
+    # for _ in range(2):
+    #     best_score, best_path = main_logic(valves[initial_valve], valves_with_rate, time_remaining)
+    #     print('best_score', best_score)
+    #     print('best_path', best_path)
+    #     new_opened_valves = set(valves[name] for name in best_path)
+    #     valves_with_rate = [x for x in valves_with_rate if x not in new_opened_valves]
+    # return
+
+    # num_workers = 2
+    # times_workers = [(time_remaining, initial_valve)] * num_workers
+    # print('times_workers', times_workers)
+
+    # score = 0
+    # while valves_with_rate and times_workers:
+    #     print('Run loop')
+
+    #     times_workers.sort(key=lambda x: x[0])
+    #     worker_time_remaining, worker_valve_name = times_workers.pop()
+    #     worker_valve = valves[worker_valve_name]
+
+    #     print('worker_time_remaining, worker_valve_name', worker_time_remaining, worker_valve_name)
+
+    #     _, best_path = main_logic(worker_valve, valves_with_rate, worker_time_remaining)
+
+    #     if len(best_path) <= 1:
+    #         continue
+
+    #     print('valves_with_rate', valves_with_rate)
+    #     print('best_path', best_path)
+
+    #     next_valve_name = best_path[1]  # Second in best_path array
+    #     next_valve = valves[next_valve_name]
+
+    #     print('next_valve_name', next_valve_name, next_valve)
+
+    #     # Move
+    #     tmp_time = worker_time_remaining - worker_valve.distances[next_valve_name]
+    #     # Open
+    #     tmp_time -= 1
+    #     score += tmp_time * next_valve.rate
+
+    #     valves_with_rate = [x for x in valves_with_rate if x != next_valve]
+
+    #     print('Final time', tmp_time)
+    #     times_workers.append((tmp_time, next_valve_name))
+
+    # print(score)
+
+    # return score
+
+
 def part_1(input_file):
     data = common.read_data_file_generator(input_file)
     return foo(data)
 
 
 def part_2(input_file):
-    raise NotImplementedError
+    data = common.read_data_file_generator(input_file)
+    return bar(data)
