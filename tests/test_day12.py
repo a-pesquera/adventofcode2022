@@ -2,7 +2,7 @@ import days.day12 as day
 
 
 class TestDay12:
-    def _test_find_fewest_steps(self):
+    def test_find_fewest_steps(self):
         data = (x for x in [
             'Sxmmmmmmmaaaaaabbbccccddddeeemmmmaaa',
             'axmmmmmmlllkkkjjjiiihhhgggfffmmmmccc',

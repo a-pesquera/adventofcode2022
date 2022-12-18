@@ -4,54 +4,58 @@ DATA_FILE = 'day10.txt'
 EXAMPLE_FILE = 'day10-example.txt'
 
 
-def do_cpu(data, cycle_offset=20, cycle_freq=40, crt_row=40):
-    cycle = 0
-    registry_x = 1
+CRT_ROW = 40
+REGISTRY_X_INITIAL = 1
+CYCLE_OFFSET = 20
+CYCLE_FREQUENCY = 40
 
+
+def do_cycle(cycle, registry_x, signals):
+    # Start of cycle
+    cycle += 1
+    if (cycle - CYCLE_OFFSET) % CYCLE_FREQUENCY == 0:
+        signals.append(cycle * registry_x)
+
+    # Render pixel
+    is_pixel_light = registry_x - 1 <= (cycle - 1) % CRT_ROW <= registry_x + 1
+    pixel = '#' if is_pixel_light else '.'
+
+    return cycle, pixel
+
+
+def create_chunks(s, size):
+    chunks = []
+    while s:
+        chunks.append(s[:size])
+        s = s[size:]
+    return chunks
+
+
+def do_cpu(data):
+    cycle = 0
+    registry_x = REGISTRY_X_INITIAL
     signals = []
     crt = ''
 
     for line in data:
-        operations = []
+        cycle, pixel = do_cycle(cycle, registry_x, signals)
+        crt += pixel
 
-        if line == 'noop':
-            operations.append(('sleep',))
-        else:
-            operations.extend([
-                ('sleep',),
-                ('addx', int(line.split(' ')[-1]))
-            ])
+        if line != 'noop':
+            cycle, pixel = do_cycle(cycle, registry_x, signals)
+            crt += pixel
+            registry_x += int(line.split(' ')[-1])
 
-        for op in operations:
-            cycle += 1
-
-            # Start of cycle
-            if (cycle - cycle_offset) % cycle_freq == 0:
-                signals.append(cycle * registry_x)
-
-            # Render CRT
-            is_pixel_light = registry_x - 1 <= (cycle - 1) % crt_row <= registry_x + 1
-            crt += '#' if is_pixel_light else '.'
-
-            # End of cycle
-            if op[0] == 'addx':
-                registry_x += op[1]
-
-    chunks = []
-    while crt:
-        chunk = crt[:crt_row]
-        crt = crt[crt_row:]
-        chunks.append(chunk)
-    return sum(signals), chunks
+    return sum(signals), create_chunks(crt, CRT_ROW)
 
 
-def sum_of_signals(data, cycle_offset=20, cycle_freq=40):
-    sum_signals, _ = do_cpu(data, cycle_offset=cycle_offset, cycle_freq=cycle_freq)
+def sum_of_signals(data):
+    sum_signals, _ = do_cpu(data)
     return sum_signals
 
 
-def crt_output(data, crt_row=40):
-    _, crt_output = do_cpu(data, crt_row=crt_row)
+def crt_output(data):
+    _, crt_output = do_cpu(data)
     return crt_output
 
 

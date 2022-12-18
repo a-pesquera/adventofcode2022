@@ -1,3 +1,5 @@
+# @TODO future: retry without using class
+
 from functools import reduce
 
 import common
@@ -7,13 +9,15 @@ EXAMPLE_FILE = 'day11-example.txt'
 
 
 class Monkey:
-    def __init__(self, items, operation_fn, divisible_by, too_much_worried):
+    def __init__(self, items, operation_fn, divisible_by, indexes, too_much_worried):
         self.items = items
         self.operation_fn = operation_fn
         self.divisible_by = divisible_by
         self.too_much_worried = too_much_worried
+        self.monkey_index_on_true = indexes[0]
+        self.monkey_index_on_false = indexes[1]
 
-        self.product_of_all_divisible_bys = None
+        self.least_common_multiple = None
 
         self.monkey_on_true = None
         self.monkey_on_false = None
@@ -41,7 +45,7 @@ class Monkey:
                 item = item // 3
 
             # Keep number "low"
-            item = item % self.product_of_all_divisible_bys
+            item = item % self.least_common_multiple
 
             test_result = item % self.divisible_by == 0
             if test_result:
@@ -50,14 +54,43 @@ class Monkey:
                 self.throw_to(self.monkey_on_false, item)
 
 
+def create_monkey(items_raw, operation_raw, test_raw, iftrue_raw, iffalse_raw, too_much_worried):
+    # Process items
+    items = [int(x) for x in items_raw[16:].split(', ')]
+
+    # Process operation_fn
+    operation = operation_raw[21:]
+
+    contains_number = not operation.endswith('old')
+    n = int(operation[2:]) if contains_number else None
+
+    operation_fn = lambda old, n=n: old + n
+    if operation.startswith('*'):
+        if contains_number:
+            operation_fn = lambda old, n=n: old * n
+        else:
+            operation_fn = lambda old: old * old
+
+    # Process divisible_by
+    divisible_by = int(test_raw[19:])
+
+    # Process indexes of other monkeys
+    monkey_on_true_idx = int(iftrue_raw[25:])
+    monkey_on_false_idx = int(iffalse_raw[26:])
+
+    # Create monkey and store references to other monkeys
+    monkey = Monkey(items, operation_fn, divisible_by, (monkey_on_true_idx, monkey_on_false_idx), too_much_worried)
+    return monkey
+
+
 def create_monkeys_list(data, too_much_worried):
     monkeys = []
     throw_to_indexes = []
-    all_divisible_bys = []
+    numbers = []
 
     has_data = True
     while has_data:
-        # Irrelevant line
+        # Irrelevant initial line
         _ = next(data)
         items_raw = next(data)
         operation_raw = next(data)
@@ -66,54 +99,27 @@ def create_monkeys_list(data, too_much_worried):
         iffalse_raw = next(data)
 
         try:
-            # Irrelevant new line
+            # Irrelevant separation line
             _ = next(data)
         except StopIteration:
             has_data = False
 
-        # Process items
-        items = [int(x) for x in items_raw[16:].split(', ')]
-
-        # Process operation_fn
-        operation = operation_raw[21:]
-        is_old = operation.endswith('old')
-        n = None
-        if not is_old:
-            n = int(operation[2:])
-        operation_fn = None
-        if operation.startswith('+'):
-            if is_old:
-                operation_fn = lambda old: old + old
-            else:
-                operation_fn = lambda old, n=n: old + n
-        elif operation.startswith('*'):
-            if is_old:
-                operation_fn = lambda old: old * old
-            else:
-                operation_fn = lambda old, n=n: old * n
-        else:
-            raise NotImplementedError
-
-        # Process divisible_by
-        divisible_by = int(test_raw[19:])
-        all_divisible_bys.append(divisible_by)
-
-        # Create monkey and store references to other monkeys
-        monkey = Monkey(items, operation_fn, divisible_by, too_much_worried)
+        monkey = create_monkey(items_raw, operation_raw, test_raw, iftrue_raw, iffalse_raw, too_much_worried)
         monkeys.append(monkey)
+        throw_to_indexes.append((monkey.monkey_index_on_true, monkey.monkey_index_on_false))
+        numbers.append(monkey.divisible_by)
 
-        monkey_on_true_idx = int(iftrue_raw[25:])
-        monkey_on_false_idx = int(iffalse_raw[26:])
-        throw_to_indexes.append((monkey_on_true_idx, monkey_on_false_idx))
+    # Calculate the LCM (least common multiple) to reduce worry levels
+    # All input divisible_by are prime numbers
+    least_common_multiple = reduce(lambda x, y: x * y, numbers, 1)
 
-    # Calculate the first number divisible by all monkeys to limit worry level
-    # up to this number. All input divisible_by are prime numbers
-    product_of_all_divisible_bys = reduce(lambda x, y: x * y, all_divisible_bys, 1)
-
-    # Assign monkeys to throw
-    for i, (true_idx, false_idx) in enumerate(throw_to_indexes):
-        monkeys[i].product_of_all_divisible_bys = product_of_all_divisible_bys
+    # Assign monkeys to throw and LCM
+    for i, monkey in enumerate(monkeys):
+        true_idx = monkey.monkey_index_on_true
+        false_idx = monkey.monkey_index_on_false
         monkeys[i].set_monkeys(monkeys[true_idx], monkeys[false_idx])
+
+        monkeys[i].least_common_multiple = least_common_multiple
 
     return monkeys
 

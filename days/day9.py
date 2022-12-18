@@ -23,40 +23,26 @@ def calculate_tail_movement(head, tail):
     if distance <= 1:
         return tail
 
-    new_tail = None
+    delta_x = 0
+    if head[0] != tail[0]:
+        delta_x = 1 if head[0] > tail[0] else -1
 
-    if head[0] == tail[0]:
-        # vertical
-        new_tail = (tail[0], (head[1] + tail[1]) // 2)
-    elif head[1] == tail[1]:
-        # horizontal
-        new_tail = ((head[0] + tail[0]) // 2, tail[1])
-    else:
-        # diagonal
-        new_tail_x = None
-        new_tail_y = None
-        if head[0] > tail[0]:
-            new_tail_x = tail[0] + 1
-        else:
-            new_tail_x = tail[0] - 1
-        if head[1] > tail[1]:
-            new_tail_y = tail[1] + 1
-        else:
-            new_tail_y = tail[1] - 1
-        new_tail = (new_tail_x, new_tail_y)
+    delta_y = 0
+    if head[1] != tail[1]:
+        delta_y = 1 if head[1] > tail[1] else -1
 
-    return new_tail
+    return (tail[0] + delta_x, tail[1] + delta_y)
 
 
 def count_tail_visited_positions(data, rope_length=2):
     tail_positions = set()
 
     rope = [(0, 0)] * rope_length
-    tail_positions.add(rope[-1])
 
     for line in data:
         direction, num = parse_line(line)
-        for x in range(num):
+
+        for _ in range(num):
             # Move head
             head = rope[0]
             rope[0] = (head[0] + direction[0], head[1] + direction[1])

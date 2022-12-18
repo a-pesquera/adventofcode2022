@@ -41,7 +41,7 @@ class TestDay4:
         result = day.part_1(day.EXAMPLE_FILE)
         assert result == 2
 
-    def _test_part_1(self):
+    def test_part_1(self):
         result = day.part_1(day.DATA_FILE)
         assert result == 483
 

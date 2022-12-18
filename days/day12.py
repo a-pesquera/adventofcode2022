@@ -4,93 +4,33 @@ DATA_FILE = 'day12.txt'
 EXAMPLE_FILE = 'day12-example.txt'
 
 
-# # is block (value 0)
-# S is start (value 1)
-# E is end (max value)
-ELEVATIONS = '#SabcdefghijklmnopqrstuvwxyzE'
-
-
 def create_matrix(data):
     matrix = []
-    for i, line in enumerate(data):
-        row_trees = [ELEVATIONS.index(t) for t in line]
-        matrix.append(row_trees)
-    return matrix
-
-
-def print_matrix(matrix, raw=False, pointer=None, blocked_points=None):
-    if blocked_points is None:
-        blocked_points = set()
-
-    block_char = '.'
-
-    print(block_char * (len(matrix[0]) + 2))
-    for i, row in enumerate(matrix):
-        print(block_char, end='')
-        for j, cell in enumerate(row):
-            if (i, j) == pointer:
-                print('@', end='')
-            elif (i, j) in blocked_points:
-                print(ELEVATIONS[0], end='')
-            elif raw:
-                print(cell, end='')
-            else:
-                print(ELEVATIONS[cell], end='')
-        print(block_char)
-    print(block_char * (len(matrix[0]) + 2))
-
-
-def print_matrix_2(matrix):
-    for i, row in enumerate(matrix):
-        for j, cell in enumerate(row):
-            print(cell, end=', ')
-        print()
-
-
-def find_start_and_end(matrix):
     start = None
     end = None
 
-    value_start = ELEVATIONS.index('S')
-    value_end = ELEVATIONS.index('E')
+    unicode_char_integer = ord('a') - 1
 
-    for i, row in enumerate(matrix):
-        for j, cell in enumerate(row):
-            if cell == value_start:
+    for i, line in enumerate(data):
+        row = []
+        matrix.append(row)
+
+        for j, lvl in enumerate(line):
+            if lvl == 'S':
+                lvl = 'a'
                 start = (i, j)
-                if end:
-                    return start, end
-            elif cell == value_end:
+            elif lvl == 'E':
+                lvl = 'z'
                 end = (i, j)
-                if start:
-                    return start, end
-    raise NotImplementedError
+
+            row.append(ord(lvl) - unicode_char_integer)
+
+    return matrix, start, end
 
 
-def walk_v1(matrix, point, end, blocked_points=None, depth=1):
-    # print('=' * 40)
-    # print('Start of walk - depth', depth)
-    if blocked_points is None:
-        blocked_points = set()
-    else:
-        new_blocked_points = blocked_points.copy()
-        blocked_points = new_blocked_points
-
-    # print_matrix(matrix, pointer=point, blocked_points=blocked_points)
-
-    blocked_points.add(point)
-
-    if point == end:
-        # print('iosafonsadionas', new_blocked_points)
-        # print('iosafonsadionas', len(new_blocked_points) - 1)
-        return len(new_blocked_points) - 1
-
-    limit_rows = len(matrix)
-    limit_cols = len(matrix[0])
-
+def create_points(point, limits):
     i, j = point
-    actual = matrix[i][j]
-    # print(f'Actual: {ELEVATIONS[actual]} (num {actual} on point {point})')
+    limit_rows, limit_cols = limits
 
     option_points = [
         (i - 1, j) if i else None,  # Up
@@ -98,188 +38,120 @@ def walk_v1(matrix, point, end, blocked_points=None, depth=1):
         (i + 1, j) if i < limit_rows - 1 else None,  # Down
         (i, j - 1) if j else None,  # Left
     ]
-    option_points = [x for x in option_points if x and x not in blocked_points]
-
-    # print('option_points', option_points)
-
-    # First, try to go up
-    for option_point in option_points:
-        # print('option_point', option_point)
-        oi, oj = option_point
-        option_actual = matrix[oi][oj]
-        if actual + 1 == option_actual:
-            # print('Yay!')
-            # print(f'Option actual: {ELEVATIONS[option_actual]} (num {option_actual} on point {option_point})')
-            result = walk(matrix, option_point, end, blocked_points, depth=depth + 1)
-            if result:
-                return result
-    # Then, try to go on the same level
-    for option_point in option_points:
-        # print('option_point', option_point)
-        oi, oj = option_point
-        option_actual = matrix[oi][oj]
-        if actual == option_actual:
-            # print('Meh')
-            # print(f'Option actual: {ELEVATIONS[option_actual]} (num {option_actual} on point {option_point})')
-            result = walk(matrix, option_point, end, blocked_points, depth=depth + 1)
-            if result:
-                return result
-
-    # print('Going back...')
-    return None
+    option_points = [x for x in option_points if x]
+    return option_points
 
 
-def walk_dijkstra(matrix, start, end):
-    limit_rows = len(matrix)
-    limit_cols = len(matrix[0])
+def dijkstra_get_smallest(pending_nodes, matrix_distances):
+    small_point = None
+    small_value = float('Inf')
 
-    unvisited_set = set((i, j) for i, row in enumerate(matrix) for j, cell in enumerate(row))
+    for i, j in pending_nodes:
+        test_value = matrix_distances[i][j]
+        if test_value < small_value:
+            small_value = test_value
+            small_point = (i, j)
+
+    return small_point
+
+
+def walk_dijkstra(matrix, start, end_point=None, end_value=None, filter_function=None):
+    limits = (len(matrix), len(matrix[0]))
+
+    unvisited_nodes = set((i, j) for i, row in enumerate(matrix) for j, cell in enumerate(row))
 
     matrix_distances = []
+    inf = float('Inf')
     for row in matrix:
         tent_row = []
         for col in row:
-            tent_row.append(1e20)
+            tent_row.append(inf)
         matrix_distances.append(tent_row)
 
+    # Initial point distance is 0
     matrix_distances[start[0]][start[1]] = 0
 
-    # print_matrix(matrix)
-    # print_matrix_2(matrix_distances)
+    pending_nodes = set()
+    pending_nodes.add(start)
+    while pending_nodes:
+        current = dijkstra_get_smallest(pending_nodes, matrix_distances)
+        pending_nodes.remove(current)
 
-    with_value = set()
-    with_value.add(start)
+        option_points = create_points(current, limits)
+        option_points = (x for x in option_points if x in unvisited_nodes)
 
-    def get_smallest(with_value, matrix_distances):
-        lst = list(with_value)
-        small_point = lst.pop()
-        small_value = matrix_distances[small_point[0]][small_point[1]]
-        for i, j in lst:
-            test_value = matrix_distances[i][j]
-            if test_value < small_value:
-                small_point = (i, j)
-        with_value.remove(small_point)
-        return small_point
+        if filter_function:
+            # Part 1: points that are at most 1 value bigger than current
+            # Part 2: points that are at lest 1 value lower than current
+            option_points = (p for p in option_points if filter_function(matrix, current, p))
 
-    while with_value:
-        current = get_smallest(with_value, matrix_distances)
-        i, j = current
-        current_distance = matrix_distances[i][j]
-        if current == end:
-            break
-
-        option_points = [
-            (i - 1, j) if i else None,  # Up
-            (i, j + 1) if j < limit_cols - 1 else None,  # Right
-            (i + 1, j) if i < limit_rows - 1 else None,  # Down
-            (i, j - 1) if j else None,  # Left
-        ]
-        option_points = [x for x in option_points if x and x in unvisited_set]
-        option_points = [x for x in option_points if matrix[x[0]][x[1]] <= matrix[i][j] + 1]
-        # print('option_points', option_points)
+        current_distance = matrix_distances[current[0]][current[1]]
         for option_point in option_points:
-            with_value.add(option_point)
-            oi, oj = option_point
-            # print('option_point', option_point)
-            tentative_distance = current_distance + 1
-            # print('tentative_distance', tentative_distance)
-            if matrix_distances[oi][oj] > tentative_distance:
-                matrix_distances[oi][oj] = tentative_distance
-        unvisited_set.remove(current)
+            option_point_distance = current_distance + 1
 
-        # print_matrix_2(matrix_distances)
-        # break
-    print_matrix_2(matrix_distances)
-    return current_distance
+            if option_point == end_point:
+                return option_point_distance
+            elif end_value is not None:
+                option_value = matrix[option_point[0]][option_point[1]]
+                if option_value == end_value:
+                    return option_point_distance
+
+            pending_nodes.add(option_point)
+
+            i, j = option_point
+            if matrix_distances[i][j] > option_point_distance:
+                matrix_distances[i][j] = option_point_distance
+
+        unvisited_nodes.remove(current)
 
 
-def walk(matrix, start, end):
-    # Breadth-first_search
-    limit_rows = len(matrix)
-    limit_cols = len(matrix[0])
-
-    matrix[end[0]][end[1]] -= 1
-
+def walk_bfs(matrix, start, end_point=None, end_value=None, filter_function=None):
+    # Breadth-first search
     explored = set()
+    queue = []
+    limits = (len(matrix), len(matrix[0]))
+
+    # Start point
+    queue.append((start, 0))
     explored.add(start)
 
-    queue = []
-    queue.append((start, 0))
-
     while queue:
         current, current_distance = queue.pop(0)
 
-        i, j = current
+        option_points = create_points(current, limits)
+        option_points = (p for p in option_points if p not in explored)
 
-        option_points = [
-            (i - 1, j) if i else None,  # Up
-            (i, j + 1) if j < limit_cols - 1 else None,  # Right
-            (i + 1, j) if i < limit_rows - 1 else None,  # Down
-            (i, j - 1) if j else None,  # Left
-        ]
-        option_points = [x for x in option_points if x and x not in explored]
-        option_points = [x for x in option_points if matrix[x[0]][x[1]] <= matrix[i][j] + 1]
+        if filter_function:
+            # Part 1: points that are at most 1 value bigger than current
+            # Part 2: points that are at lest 1 value lower than current
+            option_points = (p for p in option_points if filter_function(matrix, current, p))
 
         for option_point in option_points:
-            queue.append((option_point, current_distance + 1))
+            option_point_distance = current_distance + 1
+            queue.append((option_point, option_point_distance))
             explored.add(option_point)
 
-            if option_point == end:
-                return current_distance + 1
-
-    return current_distance
-
-
-def walk_until_a(matrix, end):
-    limit_rows = len(matrix)
-    limit_cols = len(matrix[0])
-
-    matrix[end[0]][end[1]] -= 1
-
-    expected_value = ELEVATIONS.index('a')
-
-    explored = set()
-    explored.add(end)
-
-    queue = []
-    queue.append((end, 0))
-
-    while queue:
-        current, current_distance = queue.pop(0)
-
-        i, j = current
-
-        option_points = [
-            (i - 1, j) if i else None,  # Up
-            (i, j + 1) if j < limit_cols - 1 else None,  # Right
-            (i + 1, j) if i < limit_rows - 1 else None,  # Down
-            (i, j - 1) if j else None,  # Left
-        ]
-        option_points = [x for x in option_points if x and x not in explored]
-        option_points = [x for x in option_points if matrix[x[0]][x[1]] >= matrix[i][j] - 1]
-
-        for option_point in option_points:
-            queue.append((option_point, current_distance + 1))
-            explored.add(option_point)
-
-            option_value = matrix[option_point[0]][option_point[1]]
-            if option_value == expected_value:
-                return current_distance + 1
-
-    return current_distance
+            if option_point == end_point:
+                return option_point_distance
+            elif end_value is not None:
+                option_value = matrix[option_point[0]][option_point[1]]
+                if option_value == end_value:
+                    return option_point_distance
 
 
 def find_fewest_steps(data):
-    matrix = create_matrix(data)
-    start, end = find_start_and_end(matrix)
-    result = walk(matrix, start, end)
+    matrix, start, end = create_matrix(data)
+    go_up = lambda matrix, src, dst: matrix[dst[0]][dst[1]] <= matrix[src[0]][src[1]] + 1
+    # result = walk_dijkstra(matrix, start, end_point=end, filter_function=go_up)
+    result = walk_bfs(matrix, start, end_point=end, filter_function=go_up)
     return result
 
 
 def find_fewest_steps_until_a(data):
-    matrix = create_matrix(data)
-    _, end = find_start_and_end(matrix)
-    result = walk_until_a(matrix, end)
+    matrix, _, end = create_matrix(data)
+    go_down = lambda matrix, src, dst: matrix[dst[0]][dst[1]] >= matrix[src[0]][src[1]] - 1
+    # result = walk_dijkstra(matrix, end, end_value=1, filter_function=go_down)
+    result = walk_bfs(matrix, end, end_value=1, filter_function=go_down)
     return result
 
 

@@ -24,50 +24,44 @@ def parse_pair_of_packets(data):
     return pair_of_packets
 
 
-def is_in_right_order(packet_1, packet_2):
-    # print('is_in_right_order', packet_1, packet_2)
-    for a, b in zip_longest(packet_1, packet_2):
-        # print('a, b', a, b)
-
-        if a is None:
+def packet_less_than(packet_1, packet_2):
+    for left, right in zip_longest(packet_1, packet_2):
+        if left is None:
+            # End of packet 1, it's in order
             return True
-        if b is None:
+        if right is None:
+            # End of packet 2 before packet 1, it's NOT in order
             return False
 
-        a_is_list = isinstance(a, list)
-        b_is_list = isinstance(b, list)
-        if not a_is_list and not b_is_list:
-            if a < b:
+        left_is_number = isinstance(left, int)
+        right_is_number = isinstance(right, int)
+        if left_is_number and right_is_number:
+            if left < right:
                 return True
-            elif a > b:
+            elif left > right:
                 return False
+            # Not sure... Continue checking
             continue
 
-        a = a if a_is_list else [a]
-        b = b if b_is_list else [b]
+        left = [left] if left_is_number else left
+        right = [right] if right_is_number else right
 
-        partial_result = is_in_right_order(a, b)
-        # print('partial_result', partial_result)
-        if partial_result is not None:
-            return partial_result
+        result = packet_less_than(left, right)
+        if result is not None:
+            return result
 
+    # Both packets are the same
     return None
 
 
 def get_sum_of_indexes_in_right_order(data):
     pair_of_packets = parse_pair_of_packets(data)
-    print('pair_of_packets', pair_of_packets)
 
+    packets_index_start = 1
     ordered_indexes = []
-
-    for i, (packet_1, packet_2) in enumerate(pair_of_packets, 1):
-        print('Pair', i)
-        print(packet_1, 'vs', packet_2)
-        if is_in_right_order(packet_1, packet_2):
-            print('Ordered!!')
+    for i, (packet_1, packet_2) in enumerate(pair_of_packets, packets_index_start):
+        if packet_less_than(packet_1, packet_2):
             ordered_indexes.append(i)
-        else:
-            print('Not ordered')
 
     return sum(ordered_indexes)
 
@@ -77,7 +71,7 @@ def quicksort_partition(array, left, right):
     partition = left - 1
 
     for i in range(left, right):
-        if is_in_right_order(array[i], pivot):
+        if packet_less_than(array[i], pivot):
             partition += 1
             array[partition], array[i] = array[i], array[partition]
 
@@ -100,8 +94,10 @@ def quicksort(array, left=None, right=None):
 
 def multiply_divider_packets_indexes(data):
     pair_of_packets = parse_pair_of_packets(data)
+    # Ungroup and put all in a list
     all_packets = [x for pair in pair_of_packets for x in pair]
 
+    # Additional divider packets
     divider_packets = [
         [[2]],
         [[6]],
@@ -110,6 +106,7 @@ def multiply_divider_packets_indexes(data):
 
     quicksort(all_packets)
 
+    # Find divider packets in ordered array
     indexes = []
     for divider in divider_packets:
         index = all_packets.index(divider)

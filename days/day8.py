@@ -4,45 +4,6 @@ DATA_FILE = 'day8.txt'
 EXAMPLE_FILE = 'day8-example.txt'
 
 
-def is_hidden(matrix, row, column):
-    row_trees = matrix[row]
-    actual_tree = row_trees[column]
-
-    # First, check row
-    # Check left part
-    for tree in row_trees[:column]:
-        if tree >= actual_tree:
-            break
-    else:
-        return False
-
-    # Check right part
-    for tree in row_trees[column + 1:]:
-        if tree >= actual_tree:
-            break
-    else:
-        return False
-
-    # Second, check column
-    # Check top part
-    for i in range(0, row):
-        tree = matrix[i][column]
-        if tree >= actual_tree:
-            break
-    else:
-        return False
-
-    # Check bottom part
-    for i in range(row + 1, len(matrix)):
-        tree = matrix[i][column]
-        if tree >= actual_tree:
-            break
-    else:
-        return False
-
-    return True
-
-
 def create_matrix(data):
     matrix = []
     for i, line in enumerate(data):
@@ -51,88 +12,53 @@ def create_matrix(data):
     return matrix
 
 
+def rotate_matrix(matrix):
+    list_of_tuples = zip(*matrix[::-1])
+    return [list(elem) for elem in list_of_tuples]
+
+
 def count_visible_trees(data):
     matrix = create_matrix(data)
+    visible_matrix = [list([False] * len(row)) for row in matrix]
 
-    # print('Forest')
-    # for row in matrix:
-    #     print(row)
+    # Find only visible trees IN ROW from left to right
+    # Then, rotate both matrix and find trees 3 more times
+    # All visible trees are marked in the other matrix
+    for _ in range(4):
+        matrix = rotate_matrix(matrix)
+        visible_matrix = rotate_matrix(visible_matrix)
+        for i, row in enumerate(matrix):
+            min_height = -1
+            for j, col in enumerate(row):
+                if col > min_height:
+                    min_height = col
+                    visible_matrix[i][j] = True
 
-    edge_count = (len(matrix) * 2) + ((len(matrix[0]) - 2) * 2)
-
-    count = 0
-
-    for i, row in enumerate(matrix[1:-1], 1):
-        for j, col in enumerate(row[1:-1], 1):
-            is_hid = is_hidden(matrix, i, j)
-            if not is_hid:
-                count += 1
-
-    return edge_count + count
-
-
-def calculate_score(matrix, row, column):
-    row_trees = matrix[row]
-    actual_tree = row_trees[column]
-
-    # First, check row
-    # Check left part
-    left_count = 0
-    for tree in reversed(row_trees[:column]):
-        left_count += 1
-        if tree >= actual_tree:
-            break
-    # print('left_count', left_count)
-
-    # Check right part
-    right_count = 0
-    for tree in row_trees[column + 1:]:
-        right_count += 1
-        if tree >= actual_tree:
-            break
-    # print('right_count', right_count)
-
-    # Second, check column
-    # Check top part
-    top_count = 0
-    for i in reversed(range(0, row)):
-        tree = matrix[i][column]
-        top_count += 1
-        if tree >= actual_tree:
-            break
-    # print('top_count', top_count)
-
-    # Check bottom part
-    bottom_count = 0
-    for i in range(row + 1, len(matrix)):
-        tree = matrix[i][column]
-        bottom_count += 1
-        if tree >= actual_tree:
-            break
-    # print('bottom_count', top_count)
-
-    # print(left_count, right_count, top_count, bottom_count)
-
-    return left_count * right_count * top_count * bottom_count
+    return sum(1 for row in visible_matrix for cell in row if cell)
 
 
 def get_best_scenic_score(data):
     matrix = create_matrix(data)
+    scenic_score_matrix = [list([1] * len(row)) for row in matrix]
 
-    # print('Forest')
-    # for row in matrix:
-    #     print(row)
+    # Samem as part 1, go only through rows and rotate matrix
+    for _ in range(4):
+        matrix = rotate_matrix(matrix)
+        scenic_score_matrix = rotate_matrix(scenic_score_matrix)
 
-    max_score = 0
+        for i, row in enumerate(matrix[1:-1], 1):  # Ignoring limits
+            for j, col in enumerate(row[1:-1], 1):  # Ignoring limits
+                count = 0
+                tmp_max = -1
+                j_start = j + 1
 
-    for i, row in enumerate(matrix[1:-1], 1):
-        for j, col in enumerate(row[1:-1], 1):
-            score = calculate_score(matrix, i, j)
-            # print('Score', (i, j), score)
-            if score > max_score:
-                max_score = score
+                for j2, col2 in enumerate(row[j_start:], j_start):
+                    count += 1
+                    if col2 >= col:
+                        break
+                scenic_score_matrix[i][j] *= count
 
-    return max_score
+    return max(col for row in scenic_score_matrix[1:-1] for col in row[1:-1])
 
 
 def part_1(input_file):
