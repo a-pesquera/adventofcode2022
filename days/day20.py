@@ -4,8 +4,11 @@ DATA_FILE = 'day20.txt'
 EXAMPLE_FILE = 'day20-example.txt'
 
 
-def create_list(data):
-    return [(i, int(l)) for i, l in enumerate(data)]
+def create_list(data, decryption_key):
+    it = (int(l) for l in data)
+    if decryption_key:
+        it = (l * decryption_key for l in it)
+    return list(enumerate(it))
 
 
 def move_turn(lst, index):
@@ -36,17 +39,18 @@ def move_turn(lst, index):
     return lst
 
 
-def foo(data):
-    lst = create_list(data)
-    # print('lst', lst)
+def grove_coordinates(data, mix=1, decryption_key=None):
+    lst = create_list(data, decryption_key)
 
-    for n in range(len(lst)):
-        # print('lst', [x[1] for x in lst])
-        index = [x[0] for x in lst].index(n)
-        # print('Step', n + 1, 'n', n, 'index', index)
-        lst = move_turn(lst, index)
+    for _ in range(mix):
+        for n in range(len(lst)):
+            index = None
+            for i, x in enumerate(lst):
+                if x[0] == n:
+                    index = i
+                    break
 
-    # print('lst', [x[1] for x in lst])
+            lst = move_turn(lst, index)
 
     # Find 0 because it's the "initial" index for coordinates
     initial_coordinate_index = [x[1] for x in lst].index(0)
@@ -59,8 +63,9 @@ def foo(data):
 
 def part_1(input_file):
     data = common.read_data_file_generator(input_file)
-    return foo(data)
+    return grove_coordinates(data)
 
 
 def part_2(input_file):
-    raise NotImplementedError
+    data = common.read_data_file_generator(input_file)
+    return grove_coordinates(data, mix=10, decryption_key=811589153)
