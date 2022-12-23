@@ -11,7 +11,7 @@ class TestDay23:
             '..##.',
             '.....',
         ])
-        result = day.foo(data, rounds=5)
+        result, *_ = day.plant_seeds(data, rounds=5)
         assert result == 25
 
     def test_part_1_example(self):
@@ -22,10 +22,11 @@ class TestDay23:
         result = day.part_1(day.DATA_FILE, rounds=10)
         assert result == 4068
 
-    def _test_part_2_example(self):
+    def test_part_2_example(self):
         result = day.part_2(day.EXAMPLE_FILE)
-        assert result == 0
+        assert result == 20
 
-    def _test_part_2(self):
+    def test_part_2(self):
         result = day.part_2(day.DATA_FILE)
-        assert result == 0
+        assert result > 624
+        assert result == 968
