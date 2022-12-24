@@ -62,8 +62,6 @@ def print_map(blizzards, walls, actual=None):
     min_y = min(p[1] for p in walls)
     max_y = max(p[1] for p in walls)
 
-    blizzards
-
     print('=' * 20)
     for i in range(min_x, max_x + 1):
         for j in range(min_y, max_y + 1):
@@ -122,7 +120,7 @@ def new_turn(blizzards, walls):
 def action_options(actual, blizzards_after_move, walls, finish_point):
     options = []
 
-    adjacents = calculate_adjacents(actual) if actual not in walls else {(actual[0] + 1, actual[1])}
+    adjacents = calculate_adjacents(actual)
 
     if finish_point in adjacents:
         return [finish_point]
@@ -142,14 +140,9 @@ def action_options(actual, blizzards_after_move, walls, finish_point):
     return options
 
 
-def precalculate_blizzards(blizzards, walls):
-    min_x = min(p[0] for p in walls)
-    max_x = max(p[0] for p in walls)
-    min_y = min(p[1] for p in walls)
-    max_y = max(p[1] for p in walls)
-
-    num_cols = max_x - min_x - 1
-    num_rows = max_y - min_y - 1
+def precalculate_blizzards(blizzards, walls, top_left_point, bottom_right_point):
+    num_cols = bottom_right_point[0] - top_left_point[0] + 1
+    num_rows = bottom_right_point[1] - top_left_point[1] + 1
 
     num_differents_states = lcm(num_rows, num_cols)
 
@@ -162,57 +155,87 @@ def precalculate_blizzards(blizzards, walls):
     return all_blizzards
 
 
-def do_the_thing(start, finish, all_blizzards, walls):
+def do_the_thing(start, finish, all_blizzards, walls, initial_minute=0, print_things=False, return_path=False):
     explored = set()
     queue = []
 
     # Start point
-    queue.append((start, 0))
-    explored.add((start, 0 % len(all_blizzards)))
+    queue.append((start, initial_minute))
+    explored.add((start, initial_minute % len(all_blizzards)))
+
+    path = {}
+    path[(start, initial_minute)] = None
 
     while queue:
         current, minute = queue.pop(0)
-        # print('current', current, 'minute', minute)
-        # print_map(all_blizzards[minute % len(all_blizzards)], walls, current)
+        if print_things:
+            print('current', current, 'minute', minute)
+            print_map(all_blizzards[minute % len(all_blizzards)], walls, current)
 
         next_minute = minute + 1
         next_blizzard_idx = next_minute % len(all_blizzards)
         blizzards_after_move = all_blizzards[next_blizzard_idx]
         options = action_options(current, blizzards_after_move, walls, finish)
         options = (p for p in options if (p, next_blizzard_idx) not in explored)
-        # print('options', list(options))
+        if print_things:
+            options = list(options)
+            print('options', options)
 
         for option in options:
             queue.append((option, next_minute))
             explored.add((option, next_blizzard_idx))
+            path[(option, next_minute)] = (current, minute)
 
             if option == finish:
+                if return_path:
+                    full_path = [option]
+                    previous_key = (option, next_minute)
+                    while path[previous_key]:
+                        previous, time = path[previous_key]
+                        full_path.append(previous)
+                        previous_key = (previous, time)
+                    return reversed(full_path)
                 return next_minute
 
 
-def foo(data):
+def foo(data, travels=1):
     info = parse_data(data)
     walls = info['walls']
     blizzards = info['blizzards']
     start_point = info['start_point']
     finish_point = info['finish_point']
 
-    # Add start point to walls to not going back
-    walls.add(start_point)
+    # Calculate rectangle dimensions
+    min_x = min(p[0] for p in walls) + 1
+    max_x = max(p[0] for p in walls) - 1
+    min_y = min(p[1] for p in walls) + 1
+    max_y = max(p[1] for p in walls) - 1
+    top_left_point = (min_x, min_y)
+    bottom_right_point = (max_x, max_y)
 
-    # print(start_point)
-    # print(finish_point)
-    # print(blizzards)
+    # Close walls
+    walls.add((start_point[0] - 1, start_point[1]))
+    walls.add((finish_point[0] + 1, finish_point[1]))
 
-    all_blizzards = precalculate_blizzards(blizzards, walls)
-    # print('all_blizzards', all_blizzards)
-    # print('all_blizzards', len(all_blizzards))
-    # for i, blizzards in enumerate(all_blizzards):
-    #     print('i', i)
-    #     print_map(blizzards, walls)
+    # All blizzards move the same way and after some minutes they are repeating the pattern
+    all_blizzards = precalculate_blizzards(blizzards, walls, top_left_point, bottom_right_point)
 
-    result = do_the_thing(start_point, finish_point, all_blizzards, walls)
-    print('result', result)
+    # Start travelling
+    result = 0
+    for i in range(travels):
+        start, finish = start_point, finish_point
+
+        if i % 2 != 0:
+            # Go from end to start on odd travels
+            start, finish = finish_point, start_point
+
+        # Block start to not going back to square 1
+        if finish in walls:
+            walls.remove(finish)
+        walls.add(start)
+
+        result = do_the_thing(start, finish, all_blizzards, walls, initial_minute=result)
+
     return result
 
 
@@ -222,4 +245,5 @@ def part_1(input_file):
 
 
 def part_2(input_file):
-    raise NotImplementedError
+    data = common.read_data_file_generator(input_file)
+    return foo(data, travels=3)
