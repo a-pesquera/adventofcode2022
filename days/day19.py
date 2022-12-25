@@ -134,10 +134,32 @@ def foo(data):
     return sum(quality_levels)
 
 
+def bar(data):
+    minutes = 32
+    useful_blueprints = 3
+
+    max_geodes_result = 1
+
+    for n, line in enumerate(data):
+        if n == useful_blueprints:
+            break
+        tpl = tuple(int(x) for x in PARSE_RE.match(line).groups())
+        bp_id, ore_ore, clay_ore, obsidian_ore, obsidian_clay, geode_ore, geode_obsidian = tpl
+        print(line)
+        print('Doing BP', bp_id)
+        max_geodes = get_max_geodes(ore_ore, clay_ore, obsidian_ore, obsidian_clay, geode_ore, geode_obsidian, minutes)
+        print('max_geodes', max_geodes)
+        max_geodes_result *= max_geodes
+        print('max_geodes_result', max_geodes_result, flush=True)
+
+    return max_geodes_result
+
+
 def part_1(input_file):
     data = common.read_data_file_generator(input_file)
     return foo(data)
 
 
 def part_2(input_file):
-    raise NotImplementedError
+    data = common.read_data_file_generator(input_file)
+    return bar(data)

@@ -10,10 +10,10 @@ class TestDay19:
         result = day.part_1(day.DATA_FILE)
         assert result == 1262
 
-    def _test_part_2_example(self):
+    def test_part_2_example(self):
         result = day.part_2(day.EXAMPLE_FILE)
-        assert result == 0
+        assert result == 3472
 
-    def _test_part_2(self):
+    def test_part_2(self):
         result = day.part_2(day.DATA_FILE)
-        assert result == 0
+        assert result == 37191
